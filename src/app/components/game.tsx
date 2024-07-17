@@ -13,6 +13,7 @@ import {
   ModalFooter,
   useDisclosure
 } from "@nextui-org/modal";
+import { user } from '@nextui-org/theme';
 
 interface WordGuessingGameProps {
   initialSecretWords: string[];
@@ -23,17 +24,19 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   const [secretWords, setSecretWords] = useState(initialSecretWords);
   const [relatedWords, setRelatedWords] = useState(initialRelatedWords);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [guessCount, setGuessCount] = useState(0);
+  const [guessCount, setGuessCount] = useState(0); // Guess count for current word
   const [gameOver, setGameOver] = useState(false);
   const [userGuess, setUserGuess] = useState('');
   const [message, setMessage] = useState('');
   const [hintIndex, setHintIndex] = useState(0);
 
+  const [skippedWords, setSkippedWords] = useState([] as string[]);
+
   const obj = initialSecretWords.reduce((acc, key) => {
     acc[key] = 0;
     return acc;
   }, {} as Record<string, number>);
-  const [userGuessCount, setUserGuessCount] = useState(obj);
+  const [userGuessCount, setUserGuessCount] = useState(obj); // Total guess count for each word
 
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
 
@@ -41,6 +44,7 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   const currentHints = relatedWords[currentWord];
 
   const handleSkip = () => {
+    setSkippedWords([...skippedWords, currentWord]);
     if (currentWordIndex < secretWords.length - 1) {
       setCurrentWordIndex(currentWordIndex + 1);
       setHintIndex(0);
@@ -52,22 +56,14 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   };
 
   const handleGuess = () => {
-    setUserGuess('');
-    const newUserGuessCount = {
-      ...userGuessCount,
-      [currentWord]: userGuessCount[currentWord] + 1,
-    }
-    setUserGuessCount(newUserGuessCount);
-    console.log(userGuessCount);
-    
-    if (userGuess.toLowerCase() === currentWord) {
+    if (userGuess.toLowerCase() === currentWord) { // Correct guess
       if (currentWordIndex === secretWords.length - 1) {
         setGameOver(true);
         setCurrentWordIndex(currentWordIndex + 1);
         onOpen();
       } else {
         setCurrentWordIndex(currentWordIndex + 1);
-        setGuessCount(guessCount + 1)
+        setGuessCount(0);
         setHintIndex(0);
       }
     } else {
@@ -79,17 +75,15 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
       } else {
         setHintIndex((hintIndex + 1) % currentHints.length);
       }
-    }
+    } 
     
-  };
-
-  const resetGame = () => {
-    setCurrentWordIndex(0);
-    setGuessCount(0);
-    setGameOver(false);
-    setHintIndex(0);
     setUserGuess('');
   };
+
+  useEffect(() => {
+    setUserGuessCount({ ...userGuessCount, [currentWord]: guessCount + 1 });
+  
+  }, [guessCount, currentWord, currentWordIndex]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -106,7 +100,7 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
                 <div className='flex items-center justify-center'>
                   {
                     currentHints.slice(0, hintIndex).map((hint: string, i) => (
-                      <div key={i} className='flex items-center justify-center text-sm text-slate-900 my-1 p-[1%] min-w-6 min-h-3 bg-green-200 mr-2'>
+                      <div key={i} className='flex items-center justify-center text-sm text-slate-900 my-1 p-[1%] min-w-6 min-h-3 bg-orange-100 mr-2'>
                         {hint.toUpperCase()}
                       </div>
                     ))
@@ -141,29 +135,30 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
                 {
                   secretWords.slice(0, currentWordIndex).map((word: string, i) => 
                     <div key={i} className='flex items-center justify-between min-w-full'> 
-                        <p className='font-bold'> { userGuessCount[currentWord] }</p>
-                        <div className='flex'>
-                          {Array.from(word.toUpperCase()).map((letter, i) => (
-                              <div key={i} className='flex items-center justify-center text-slate-900 my-1 p-[1%] min-w-6 bg-sky-300 font-bold'>
-                                  { letter }
-                              </div>
-                          ))} 
+                      {
+                        skippedWords.includes(word) ? '❌' : <p className='font-bold'> { userGuessCount[word] }</p>
+                      }
+                      
+                      <div className='flex'>
+                        <div className='flex items-center justify-center text-slate-900 my-1 px-1 min-w-6 min-h-3 bg-sky-300 font-bold'>
+                          { word.toUpperCase() }
                         </div>
+                      </div>
                     </div>
                     )
                 }
               
-                {secretWords.slice(currentWordIndex).map((word: string, i) => 
+                {
+                  secretWords.slice(currentWordIndex).map((word: string, i) => 
                     <div key={i} className='flex items-center justify-between min-w-full'> 
-                        <p> {'⬜️ '}</p>
-                        <div className='flex'>
-                          {Array.from(word.toUpperCase()).map((letter, i) => (
-                              <div key={i} className='flex items-center justify-center text-slate-900 my-1 p-[1%] min-w-6 min-h-6 bg-gray-300 font-bold'>
-                              </div>
-                          ))} 
+                      <p> {'⬜️ '}</p>
+                      <div className='flex'>
+                        <div className='flex items-center justify-center text-gray-300 my-1 px-1 min-w-6 min-h-3 bg-gray-300 font-bold'>
+                          {word.toUpperCase()}
                         </div>
+                      </div>
                     </div>
-                    )
+                  )
                 }
             </div>
         }
