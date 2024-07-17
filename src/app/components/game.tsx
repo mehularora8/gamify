@@ -13,7 +13,6 @@ import {
   ModalFooter,
   useDisclosure
 } from "@nextui-org/modal";
-import { user } from '@nextui-org/theme';
 
 interface WordGuessingGameProps {
   initialSecretWords: string[];
