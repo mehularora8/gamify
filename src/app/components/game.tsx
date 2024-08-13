@@ -70,7 +70,7 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
     let newTotalGuessCount = totalGuessCount + 1;
     setTotalGuessCount(newTotalGuessCount);
 
-    if (userGuess.trim().toLowerCase() === currentWord) {
+    if (userGuess.trim().toLowerCase() === currentWord.toLowerCase()) {
       // Correct guess
       setUserGuessCount((prevCount) => ({
         ...prevCount,
@@ -162,7 +162,7 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   }
 
   return (  
-    <div className="flex flex-col justify-center items-center max-w-md mx-auto mt-8 p-6 bg-white rounded-lg select-none">
+    <div className="flex flex-col justify-center items-center max-w-md mx-auto mt-6 p-6 bg-white rounded-lg select-none">
         {!gameOver ? (
             <>  
                 <div className="flex flex-col mb-2 text-stone-900 text-4xl mb-8 min-w-[100%]">

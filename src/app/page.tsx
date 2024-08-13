@@ -11,6 +11,7 @@ interface DatabaseRow {
   id: number;
   created_at: string;
   json_words: WordData;
+  event: string;
 }
 
 interface WordData {
@@ -26,7 +27,7 @@ const getDateForWords = () : string => {
   return `${year}-${month}-${day}`;
 }
 
-const fetchWordsByDate = async (table: string, date: string): Promise<WordData | null> => {
+const fetchWordsByDate = async (table: string, date: string): Promise<DatabaseRow | null> => {
   const supabaseUrl = 'https://xucbswzhkwbwqcxybhfu.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1Y2Jzd3poa3did3FjeHliaGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjIwNjg2NTcsImV4cCI6MjAzNzY0NDY1N30.i6q5KtzQb1VVPsAZByONaUeWgonuuEbhzd5VPerX4Fk';
   const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey);
@@ -34,16 +35,18 @@ const fetchWordsByDate = async (table: string, date: string): Promise<WordData |
   try {
     const { data, error } = await supabase
       .from(table)
-      .select('json_words')
+      .select('*')
       .eq('created_at', date)
       .single();
+
+    console.log(data);
 
     if (error) {
       console.error('Error fetching data:', error.message);
       return null;
     }
 
-    return (data as DatabaseRow).json_words;
+    return (data as DatabaseRow);
   } catch (error) {
     console.error('Unexpected error:', error);
     return null;
@@ -51,7 +54,9 @@ const fetchWordsByDate = async (table: string, date: string): Promise<WordData |
 }
 
 export default async function Home() {
-  const relatedWords = await fetchWordsByDate('words', getDateForWords());
+  const wordData = await fetchWordsByDate('words', getDateForWords());
+  const relatedWords = wordData?.json_words;
+  const event = wordData?.event;
 
   if (!relatedWords) {
     return <div>No words available for today.</div>;
@@ -63,14 +68,19 @@ export default async function Home() {
 
   return (
     <NextUIProvider>
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mt-8 mb-4 flex items-center justify-center">
+      <div className="container mx-auto px-4 items-center flex flex-col justify-center">
+        <h1 className="text-3xl font-bold text-center mt-8 mb-2 flex items-center justify-center">
           {/* Spacer -- realy need to find a way around this */}
           <div className='invisible'><Instructions/></div>
           20 Words Or Less 
           <Instructions/>
         </h1>
+        {
+          event !== "" && <div className="flex items-center justify-center text-sm text-slate-900 mb-4 font-bold">⭐{event?.toUpperCase()}⭐</div>
+        }
+        
         <h2 className="text-xl text-gray-400 text-center">Guess the secrets in 20 guesses or less.</h2>
+        
         <WordGuessingGame
           initialSecretWords={secretWords}
           initialRelatedWords={relatedWordsObject}
