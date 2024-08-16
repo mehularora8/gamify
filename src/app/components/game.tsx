@@ -4,6 +4,8 @@ import React, { useState, useEffect, use } from 'react';
 import { FaAngleRight, FaCheck, FaCopy, FaTwitter, FaQuestion, FaQuestionCircle } from 'react-icons/fa';
 import { GoSkip } from "react-icons/go";
 
+export const revalidate = 0;
+
 import {
   Modal, 
   ModalContent, 
@@ -14,6 +16,7 @@ import {
 } from "@nextui-org/modal";
 
 import { Button } from "@nextui-org/button";
+import { MdOutlineNextPlan } from 'react-icons/md';
 
 interface WordGuessingGameProps {
   initialSecretWords: string[];
@@ -100,7 +103,13 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
         setGameOver(true);
         onOpen();
       } else {
-        setHintIndex((prevHintIndex) => (prevHintIndex + 1) % currentHints.length);
+        setHintIndex((prevHintIndex) => {
+          if (prevHintIndex === currentHints.length - 1) {
+            return prevHintIndex;
+          } else {
+            return (prevHintIndex + 1) % currentHints.length;
+          }
+        });
       }
     }
 
@@ -126,6 +135,7 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   };
 
   const createEmojiString = (userGuessCount: Record<string, number>, skippedWords: string[]): string => {
+    console.log(userGuessCount);
     return Object.entries(userGuessCount).map(([word, count]) => {
       if (skippedWords.includes(word)) {
         return '❌'; // Skipped word
@@ -139,6 +149,8 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
         return '4️⃣'; // Guessed in 2-5 attempts
       } else if (count === 5) {
         return '5️⃣'; // Guessed in 2-5 attempts
+      } else {
+        return '🤭'; // Guessed in 6+ attempts
       }
     }).join('');
   }
@@ -162,45 +174,49 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
   }
 
   return (  
-    <div className="flex flex-col justify-center items-center max-w-md mx-auto mt-6 p-6 bg-white rounded-lg select-none">
+    <div className="flex flex-col justify-center items-center max-w-[100%] min-w-[100%] mx-auto mt-6 p-6 bg-white rounded-lg select-none">
         {!gameOver ? (
             <>  
-                <div className="flex flex-col mb-2 text-stone-900 text-4xl mb-8 min-w-[100%]">
+                <div className="flex flex-col mb-2 text-stone-900 text-3xl mb-8 min-w-full max-w-full">
                     <div className='flex items-center justify-center'>
-                      {
-                        currentHints.slice(0, hintIndex).map((hint: string, i) => (
-                          <div key={i} className='flex items-center justify-center text-sm text-slate-900 my-1 p-[1%] min-w-6 min-h-3 bg-orange-100 mr-2'>
+                    {
+                      currentHints.slice(0, hintIndex).map((hint, i) =>  {
+                        const bgColor = `bg-pal${currentWordIndex + 1}`;
+                        return  (
+                          <div key={i} className={`flex items-center justify-center text-slate-900 my-1 mx-1 p-[1%] min-w-6 min-h-3 text-sm ${bgColor}`}>
                             {hint.toUpperCase()}
                           </div>
-                        ))
-                      }
+                        )
+                      })
+                    }
                     </div>
                     <div className='flex items-center justify-center'>
-                      <div className='flex items-center justify-center'>  HINT:&nbsp; </div>
+                      <div className='flex items-center justify-center'> HINT:&nbsp; </div>
 
-                      <div className='flex items-center justify-center text-slate-900 my-1 p-[1%] min-w-6 min-h-3 bg-orange-300 font-bold'>
+                      <div className={`flex items-center justify-center text-slate-900 my-1 p-[1%] min-w-6 min-h-3 font-bold bg-pal${currentWordIndex + 1}`}>
                         {currentHints[hintIndex].toUpperCase()}
                       </div>
                     </div>
                 </div>
-                <div className="flex mb-4">
+                <div className="flex mb-4 max-w-[100%]">
                     <input
                       type="text"
                       value={userGuess}
                       onKeyDown={handleKeyDown}
                       onChange={(e) => setUserGuess(e.target.value)}
                       placeholder={getRemainingGuesses()}
-                      className="mr-2 border p-2 rounded-lg"
+                      className="mr-1 border p-2 rounded-lg"
                     />
-                    <button onClick={handleGuess} className='px-4' type='submit'><FaAngleRight /></button>
-                    <button onClick={handleSkip} className='px-4'><GoSkip /></button>
+                    
+                    <Button isIconOnly color='success' onClick={handleGuess} className='mx-1 text-2xl bg-transparent' type='submit'><FaAngleRight /></Button>
+                    <Button onPress={handleSkip} isIconOnly className='text-2xl bg-transparent'><MdOutlineNextPlan /></Button>
                 </div>
             </>
           ) : 
           <> </>
         }
         {
-            <div className='flex flex-col items-start text-xl min-w-full'>
+            <div className='flex flex-col items-start text-xl min-w-[100%] max-w-[100%]'>
                 {
                   secretWords.slice(0, currentWordIndex).map((word: string, i) => 
                     <div key={i} className='flex items-center justify-between min-w-full'> 
@@ -209,7 +225,8 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
                       }
                       
                       <div className='flex'>
-                        <div className='flex items-center justify-center text-slate-900 my-1 px-1 min-w-6 min-h-3 bg-sky-300 font-bold'>
+                        {/* using currentWordIndex here because at this time the wordIndex has already updated. */}
+                        <div className={`flex items-center justify-center text-slate-900 my-1 px-1 min-h-3 bg-pal${i + 1} font-bold`}>
                           { word.toUpperCase() }
                         </div>
                       </div>
@@ -220,11 +237,9 @@ const WordGuessingGame: React.FC<WordGuessingGameProps> = ({ initialSecretWords,
                 {
                   secretWords.slice(currentWordIndex).map((word: string, i) => 
                     <div key={i} className='flex items-center justify-between min-w-full'> 
-                      <p> {'⬜️ '}</p>
-                      <div className='flex'>
-                        <div className='flex items-center justify-center text-gray-300 my-1 px-1 min-w-6 min-h-3 bg-gray-300 font-bold'>
-                          {word.toUpperCase()}
-                        </div>
+                      <p> {'⬜️'}</p>
+                      <div className='flex items-center justify-center text-gray-300 my-1 px-1 min-h-3 bg-gray-300 font-bold'>
+                        {word.toUpperCase()}
                       </div>
                     </div>
                   )
@@ -269,5 +284,4 @@ export default WordGuessingGame;
 // TODO:
 // - Tell user there's no more hints for given word.
 // - Uhhhh move supabase key etc to server side?
-// - RLS on supabase is fucked
 // - localstorage for day's results

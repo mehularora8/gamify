@@ -21,7 +21,7 @@ const Instructions: React.FC = () => {
 
   return (
     <div>
-      <Button className='bg-transparent mx-2 my-4 text-2xl' onClick={instructions.onOpen}><FaRegQuestionCircle /></Button>
+      <Button isIconOnly className='bg-transparent my-4 text-xl' onClick={instructions.onOpen}><FaRegQuestionCircle /></Button>
       {/* Instructions Modal */}
       <Modal 
           isDismissable={false} 
